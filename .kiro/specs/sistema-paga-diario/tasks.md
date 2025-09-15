@@ -1,6 +1,6 @@
 # Plan de Implementación - Sistema de Paga Diario
 
-- [ ] 1. Configuración inicial del proyecto y estructura base
+- [x] 1. Configuración inicial del proyecto y estructura base
   - Crear proyecto Next.js con TypeScript y configurar estructura de directorios
   - Instalar y configurar dependencias: Supabase SDK, Bootstrap, React Hook Form
   - Configurar variables de entorno y archivos de configuración base
