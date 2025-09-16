@@ -215,13 +215,13 @@ export async function createRoute(routeData: CreateRouteForm): Promise<Route | n
 
 export async function getCollectorDailyRoute(
   collectorId: string,
-  routeDate: string = new Date().toISOString().split('T')[0]
+  routeDate?: string
 ): Promise<CollectorDailyRoute[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .rpc('get_collector_daily_route', {
       collector_id_param: collectorId,
-      route_date_param: routeDate
+      route_date_param: routeDate || new Date().toISOString().split('T')[0]
     });
 
   if (error) {

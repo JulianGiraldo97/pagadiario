@@ -59,7 +59,7 @@ CREATE POLICY "Collectors can view assigned clients" ON clients
       JOIN routes r ON ra.route_id = r.id
       WHERE ra.client_id = clients.id 
       AND r.collector_id = auth.uid()
-      AND r.route_date = CURRENT_DATE
+      AND r.route_date = NOW()::DATE
     )
   );
 
@@ -74,7 +74,7 @@ CREATE POLICY "Collectors can view debts for assigned clients" ON debts
       JOIN routes r ON ra.route_id = r.id
       WHERE ra.client_id = debts.client_id 
       AND r.collector_id = auth.uid()
-      AND r.route_date = CURRENT_DATE
+      AND r.route_date = NOW()::DATE
     )
   );
 
@@ -90,7 +90,7 @@ CREATE POLICY "Collectors can view payment schedules for assigned clients" ON pa
       JOIN routes r ON ra.route_id = r.id
       WHERE d.id = payment_schedule.debt_id
       AND r.collector_id = auth.uid()
-      AND r.route_date = CURRENT_DATE
+      AND r.route_date = NOW()::DATE
     )
   );
 
@@ -127,7 +127,7 @@ CREATE POLICY "Collectors can insert payments for own routes" ON payments
       JOIN routes r ON ra.route_id = r.id
       WHERE ra.id = payments.route_assignment_id
       AND r.collector_id = auth.uid()
-      AND r.route_date = CURRENT_DATE
+      AND r.route_date = NOW()::DATE
     )
   );
 

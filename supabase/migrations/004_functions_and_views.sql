@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION generate_payment_schedule(
 )
 RETURNS VOID AS $$
 DECLARE
-  current_date DATE := start_date_param;
+  payment_date DATE := start_date_param;
   remaining_amount DECIMAL(10,2) := total_amount_param;
   installment_count INTEGER := 0;
   max_installments INTEGER := 1000; -- Safety limit
@@ -24,7 +24,7 @@ BEGIN
     INSERT INTO payment_schedule (debt_id, due_date, amount)
     VALUES (
       debt_id_param,
-      current_date,
+      payment_date,
       LEAST(installment_amount_param, remaining_amount)
     );
     
@@ -33,9 +33,9 @@ BEGIN
     
     -- Calculate next payment date based on frequency
     IF frequency_param = 'daily' THEN
-      current_date := current_date + INTERVAL '1 day';
+      payment_date := payment_date + INTERVAL '1 day';
     ELSIF frequency_param = 'weekly' THEN
-      current_date := current_date + INTERVAL '1 week';
+      payment_date := payment_date + INTERVAL '1 week';
     END IF;
   END LOOP;
 END;
@@ -48,14 +48,14 @@ BEGIN
   UPDATE payment_schedule 
   SET status = 'overdue'
   WHERE status = 'pending' 
-  AND due_date < CURRENT_DATE;
+  AND due_date < NOW()::DATE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to get collector's daily route with client and debt information
 CREATE OR REPLACE FUNCTION get_collector_daily_route(
   collector_id_param UUID,
-  route_date_param DATE DEFAULT CURRENT_DATE
+  route_date_param DATE DEFAULT NULL
 )
 RETURNS TABLE (
   route_assignment_id UUID,
@@ -86,7 +86,7 @@ BEGIN
   LEFT JOIN payment_schedule ps ON ra.payment_schedule_id = ps.id
   LEFT JOIN payments p ON p.route_assignment_id = ra.id
   WHERE r.collector_id = collector_id_param
-  AND r.route_date = route_date_param
+  AND r.route_date = COALESCE(route_date_param, CURRENT_DATE)
   ORDER BY ra.visit_order NULLS LAST, c.name;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
