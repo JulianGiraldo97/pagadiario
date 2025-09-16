@@ -6,7 +6,7 @@
   - Configurar variables de entorno y archivos de configuración base
   - _Requerimientos: 6.2, 6.3, 6.6_
 
-- [ ] 2. Configuración de Supabase y esquema de base de datos
+- [x] 2. Configuración de Supabase y esquema de base de datos
   - Crear proyecto en Supabase y configurar conexión
   - Implementar esquema de base de datos con todas las tablas necesarias
   - Configurar políticas de Row Level Security (RLS) para cada tabla
