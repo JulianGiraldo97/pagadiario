@@ -21,7 +21,7 @@
   - Escribir tests unitarios para componentes de autenticación
   - _Requerimientos: 1.1, 1.2, 1.5_
 
-- [ ] 4. Desarrollo de layouts y navegación base
+- [x] 4. Desarrollo de layouts y navegación base
   - Crear layout principal con Bootstrap y navegación responsive
   - Implementar layout específico para dashboard administrativo
   - Crear layout para vista de cobrador optimizada para móvil

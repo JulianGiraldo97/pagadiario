@@ -1,5 +1,5 @@
 // Database utility functions for Sistema de Paga Diario
-import { createClient } from './server';
+import { createClient as createServerClient } from './server';
 import type {
   Profile,
   Client,
@@ -18,7 +18,7 @@ import type {
 
 // Profile operations
 export async function getProfile(userId: string): Promise<Profile | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -34,7 +34,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 }
 
 export async function getAllCollectors(): Promise<Profile[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -51,7 +51,7 @@ export async function getAllCollectors(): Promise<Profile[]> {
 
 // Client operations
 export async function getAllClients(): Promise<Client[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('clients')
     .select('*')
@@ -66,7 +66,7 @@ export async function getAllClients(): Promise<Client[]> {
 }
 
 export async function createClient(clientData: CreateClientForm): Promise<Client | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -92,7 +92,7 @@ export async function createClient(clientData: CreateClientForm): Promise<Client
 }
 
 export async function updateClient(id: string, clientData: Partial<CreateClientForm>): Promise<Client | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('clients')
     .update(clientData)
@@ -109,7 +109,7 @@ export async function updateClient(id: string, clientData: Partial<CreateClientF
 }
 
 export async function deleteClient(id: string): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { error } = await supabase
     .from('clients')
     .delete()
@@ -125,7 +125,7 @@ export async function deleteClient(id: string): Promise<boolean> {
 
 // Debt operations
 export async function createDebt(debtData: CreateDebtForm): Promise<Debt | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -151,7 +151,7 @@ export async function createDebt(debtData: CreateDebtForm): Promise<Debt | null>
 }
 
 export async function getClientDebts(clientId: string): Promise<Debt[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('debts')
     .select('*')
@@ -168,7 +168,7 @@ export async function getClientDebts(clientId: string): Promise<Debt[]> {
 
 // Route operations
 export async function createRoute(routeData: CreateRouteForm): Promise<Route | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -217,7 +217,7 @@ export async function getCollectorDailyRoute(
   collectorId: string,
   routeDate?: string
 ): Promise<CollectorDailyRoute[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .rpc('get_collector_daily_route', {
       collector_id_param: collectorId,
@@ -234,7 +234,7 @@ export async function getCollectorDailyRoute(
 
 // Payment operations
 export async function recordPayment(paymentData: RecordPaymentForm): Promise<Payment | null> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -287,7 +287,7 @@ export async function recordPayment(paymentData: RecordPaymentForm): Promise<Pay
 export async function getDailyCollectionSummary(
   routeDate?: string
 ): Promise<DailyCollectionSummary[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   let query = supabase
     .from('daily_collection_summary')
     .select('*')
@@ -308,7 +308,7 @@ export async function getDailyCollectionSummary(
 }
 
 export async function getClientDebtSummary(): Promise<ClientDebtSummary[]> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { data, error } = await supabase
     .from('client_debt_summary')
     .select('*')
@@ -324,7 +324,7 @@ export async function getClientDebtSummary(): Promise<ClientDebtSummary[]> {
 
 // Utility functions
 export async function updateOverduePayments(): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = createServerClient();
   const { error } = await supabase.rpc('update_overdue_payments');
 
   if (error) {
