@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './globals.css'
+import { AuthProvider } from '@/lib/auth/AuthContext'
+import BootstrapClient from '@/components/ui/BootstrapClient'
 
 export const metadata: Metadata = {
   title: 'Sistema de Paga Diario',
@@ -14,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+        <BootstrapClient />
+      </body>
     </html>
   )
 }
