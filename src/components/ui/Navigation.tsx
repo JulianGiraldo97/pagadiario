@@ -25,6 +25,7 @@ export default function Navigation() {
   const adminNavItems = [
     { href: '/admin', label: 'Dashboard', icon: '📊' },
     { href: '/admin/clients', label: 'Clientes', icon: '👥' },
+    { href: '/admin/debts', label: 'Deudas', icon: '💳' },
     { href: '/admin/collectors', label: 'Cobradores', icon: '🚶' },
     { href: '/admin/routes', label: 'Rutas', icon: '🗺️' },
     { href: '/admin/reports', label: 'Reportes', icon: '📈' },

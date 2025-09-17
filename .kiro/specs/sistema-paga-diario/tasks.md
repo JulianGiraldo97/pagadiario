@@ -36,7 +36,7 @@
   - Escribir tests de integración para flujo completo de gestión de clientes
   - _Requerimientos: 2.1_
 
-- [ ] 6. Desarrollo del sistema de deudas y cronogramas
+- [x] 6. Desarrollo del sistema de deudas y cronogramas
   - Crear componentes para gestión de deudas por cliente
   - Implementar lógica de generación automática de cronogramas de pago
   - Crear formulario de asignación de deuda con cálculo de cuotas
