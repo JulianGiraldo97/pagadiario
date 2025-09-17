@@ -6,10 +6,12 @@ import type {
   Debt,
   Route,
   RouteAssignment,
+  RouteWithAssignments,
   Payment,
   CollectorDailyRoute,
   DailyCollectionSummary,
   ClientDebtSummary,
+  ClientWithDebt,
   CreateClientForm,
   CreateDebtForm,
   CreateRouteForm,
@@ -176,6 +178,18 @@ export async function createRoute(routeData: CreateRouteForm): Promise<Route | n
     return null;
   }
 
+  // Check for existing route for the same collector and date
+  const { data: existingRoute } = await supabase
+    .from('routes')
+    .select('id')
+    .eq('collector_id', routeData.collector_id)
+    .eq('route_date', routeData.route_date)
+    .single();
+
+  if (existingRoute) {
+    throw new Error('Ya existe una ruta asignada para este cobrador en la fecha seleccionada');
+  }
+
   // Start transaction
   const { data: route, error: routeError } = await supabase
     .from('routes')
@@ -211,6 +225,100 @@ export async function createRoute(routeData: CreateRouteForm): Promise<Route | n
   }
 
   return route;
+}
+
+export async function getAllRoutes(): Promise<RouteWithAssignments[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('routes')
+    .select(`
+      *,
+      collector:profiles!routes_collector_id_fkey(id, full_name, email),
+      assignments:route_assignments(
+        id,
+        client_id,
+        visit_order,
+        client:clients(id, name, address, phone)
+      )
+    `)
+    .order('route_date', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching routes:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getRouteById(routeId: string): Promise<RouteWithAssignments | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('routes')
+    .select(`
+      *,
+      collector:profiles!routes_collector_id_fkey(id, full_name, email),
+      assignments:route_assignments(
+        id,
+        client_id,
+        visit_order,
+        client:clients(id, name, address, phone)
+      )
+    `)
+    .eq('id', routeId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching route:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function deleteRoute(routeId: string): Promise<boolean> {
+  const supabase = createServerClient();
+  
+  // Check if route can be deleted (only pending routes)
+  const { data: route } = await supabase
+    .from('routes')
+    .select('status')
+    .eq('id', routeId)
+    .single();
+
+  if (!route) {
+    console.error('Route not found');
+    return false;
+  }
+
+  if (route.status !== 'pending') {
+    throw new Error('Solo se pueden eliminar rutas pendientes');
+  }
+
+  const { error } = await supabase
+    .from('routes')
+    .delete()
+    .eq('id', routeId);
+
+  if (error) {
+    console.error('Error deleting route:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function getClientsWithActiveDebts(): Promise<ClientWithDebt[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .rpc('get_clients_with_active_debts');
+
+  if (error) {
+    console.error('Error fetching clients with active debts:', error);
+    return [];
+  }
+
+  return data || [];
 }
 
 export async function getCollectorDailyRoute(

@@ -44,7 +44,7 @@
   - Escribir tests unitarios para lógica de generación de cronogramas
   - _Requerimientos: 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 7. Implementación de gestión de rutas
+- [x] 7. Implementación de gestión de rutas
   - Crear componente para asignación de rutas diarias a cobradores
   - Implementar vista de selección de clientes para ruta específica
   - Crear funcionalidad de ordenamiento de visitas en ruta
