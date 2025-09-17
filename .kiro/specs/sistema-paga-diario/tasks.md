@@ -28,7 +28,7 @@
   - Implementar componente de navegación con control de roles
   - _Requerimientos: 1.3, 1.4, 7.1, 7.3_
 
-- [ ] 5. Implementación de gestión de clientes
+- [x] 5. Implementación de gestión de clientes
   - Crear componentes para CRUD de clientes (lista, crear, editar, eliminar)
   - Implementar formularios de cliente con validación usando React Hook Form
   - Crear tabla de clientes con paginación y búsqueda
