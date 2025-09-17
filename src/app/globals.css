@@ -9,12 +9,37 @@
   --info-color: #0dcaf0;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  line-height: 1.5;
+}
+
+/* Ensure proper text flow */
+h1, h2, h3, h4, h5, h6, p, div, span {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  direction: ltr;
+}
+
+/* Reset any potential CSS that might cause vertical text */
+.container, .container-fluid, .row, .col, [class*="col-"] {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
 }
 
 /* Mobile optimizations */
