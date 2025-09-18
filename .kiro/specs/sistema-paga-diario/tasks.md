@@ -58,7 +58,7 @@
   - Implementar indicadores de progreso de ruta diaria
   - _Requerimientos: 3.2, 3.3, 7.1, 7.3_
 
-- [ ] 9. Implementación del registro de pagos e incidencias
+- [x] 9. Implementación del registro de pagos e incidencias
   - Crear formulario de registro de pago con opciones de estado
   - Implementar componente de captura de fotos para evidencias
   - Crear funcionalidad de subida de imágenes a Supabase Storage

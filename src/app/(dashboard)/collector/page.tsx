@@ -28,6 +28,7 @@ export default function CollectorDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentClientIndex, setCurrentClientIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Load route data
   const loadRouteData = async (date: string) => {
@@ -62,6 +63,19 @@ export default function CollectorDashboard() {
 
   useEffect(() => {
     loadRouteData(selectedDate);
+    
+    // Check for success message from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const message = urlParams.get('message');
+    
+    if (success === 'true' && message) {
+      setSuccessMessage(message);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Auto-hide message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+    }
   }, [selectedDate]);
 
   const handlePaymentClick = (assignment: RouteAssignmentWithDetails) => {
@@ -105,10 +119,29 @@ export default function CollectorDashboard() {
     );
   }
 
+  // Success message component
+  const SuccessAlert = () => {
+    if (!successMessage) return null;
+    
+    return (
+      <div className="alert alert-success alert-dismissible fade show" role="alert">
+        <i className="bi bi-check-circle me-2"></i>
+        {successMessage}
+        <button
+          type="button"
+          className="btn-close"
+          onClick={() => setSuccessMessage(null)}
+        ></button>
+      </div>
+    );
+  };
+
   // Mobile layout
   if (isMobile) {
     return (
       <div className="pb-5">
+        <SuccessAlert />
+        
         {/* Header with date selector */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4 className="mb-0">Mi Ruta</h4>
@@ -125,7 +158,10 @@ export default function CollectorDashboard() {
           <div className="text-center py-5">
             <i className="bi bi-calendar-x display-1 text-muted mb-3"></i>
             <h5 className="text-muted">No hay ruta asignada</h5>
-            <p className="text-muted">No tienes clientes asignados para esta fecha.</p>
+            <p className="text-muted">No tienes clientes asignados para la fecha {selectedDate}.</p>
+            <small className="text-muted">
+              Contacta al administrador para que te asigne una ruta para esta fecha.
+            </small>
           </div>
         ) : (
           <>
@@ -179,6 +215,8 @@ export default function CollectorDashboard() {
   // Desktop layout
   return (
     <div>
+      <SuccessAlert />
+      
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Mi Ruta del Día</h2>
@@ -202,7 +240,10 @@ export default function CollectorDashboard() {
         <div className="text-center py-5">
           <i className="bi bi-calendar-x display-1 text-muted mb-3"></i>
           <h4 className="text-muted">No hay ruta asignada</h4>
-          <p className="text-muted">No tienes clientes asignados para la fecha seleccionada.</p>
+          <p className="text-muted">No tienes clientes asignados para la fecha {selectedDate}.</p>
+          <small className="text-muted">
+            Contacta al administrador para que te asigne una ruta para esta fecha.
+          </small>
         </div>
       ) : (
         <>

@@ -115,19 +115,36 @@ export default function ClientCard({ assignment, onPaymentClick, isOptimizedForM
         {payment && payment.recorded_at && (
           <div className="mb-3">
             <small className="text-muted">
+              <i className="bi bi-clock me-1"></i>
               Registrado: {new Date(payment.recorded_at).toLocaleString()}
             </small>
+            {payment.evidence_photo_url && (
+              <div className="mt-1">
+                <small className="text-success">
+                  <i className="bi bi-camera me-1"></i>
+                  Evidencia fotográfica disponible
+                </small>
+              </div>
+            )}
           </div>
         )}
 
         <div className="d-flex gap-2">
-          {!payment && (
+          {!payment ? (
             <button
               className="btn btn-primary btn-sm flex-grow-1"
               onClick={() => onPaymentClick(assignment)}
             >
               <i className="bi bi-cash me-1"></i>
               Registrar Pago
+            </button>
+          ) : (
+            <button
+              className="btn btn-outline-secondary btn-sm flex-grow-1"
+              onClick={() => onPaymentClick(assignment)}
+            >
+              <i className="bi bi-pencil me-1"></i>
+              Editar Registro
             </button>
           )}
           

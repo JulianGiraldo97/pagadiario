@@ -29,6 +29,7 @@ export default function Navigation() {
     { href: '/admin/collectors', label: 'Cobradores', icon: '🚶' },
     { href: '/admin/routes', label: 'Rutas', icon: '🗺️' },
     { href: '/admin/reports', label: 'Reportes', icon: '📈' },
+    { href: '/admin/test-route', label: 'Prueba Ruta', icon: '🧪' },
   ]
 
   const collectorNavItems = [
