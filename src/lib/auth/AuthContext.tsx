@@ -48,10 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, retryCount = 0) => {
+    const maxRetries = 3
+    const retryDelay = 2000 // 2 seconds
+
     try {
-      console.log('Attempting to sign in with Supabase...')
-      
+      console.log(`Attempting to sign in with Supabase... (attempt ${retryCount + 1}/${maxRetries + 1})`)
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -59,24 +62,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Supabase auth error:', error)
-        
+
+        // Handle 502 Bad Gateway specifically (service initializing)
+        if (error.message.includes('fetch') && retryCount < maxRetries) {
+          console.log(`Service may be initializing, retrying in ${retryDelay / 1000} seconds...`)
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          return signIn(email, password, retryCount + 1)
+        }
+
         // Handle specific error types
         if (error.message.includes('fetch')) {
-          return { 
-            error: { 
-              message: 'Error de conexión. Verifica tu conexión a internet y que el servicio de Supabase esté disponible.' 
-            } 
+          return {
+            error: {
+              message: 'El servicio de Supabase está inicializándose. Por favor, espera unos minutos e intenta nuevamente.'
+            }
           }
         }
-        
+
         if (error.message.includes('CORS')) {
-          return { 
-            error: { 
-              message: 'Error de configuración CORS. Contacta al administrador del sistema.' 
-            } 
+          return {
+            error: {
+              message: 'Error de configuración CORS. El servicio puede estar inicializándose.'
+            }
           }
         }
-        
+
         return { error }
       }
 
@@ -84,19 +94,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null }
     } catch (error) {
       console.error('Unexpected error during sign in:', error)
-      
+
+      // Retry on network errors
+      if (error instanceof TypeError && error.message.includes('fetch') && retryCount < maxRetries) {
+        console.log(`Network error, retrying in ${retryDelay / 1000} seconds...`)
+        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        return signIn(email, password, retryCount + 1)
+      }
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        return { 
-          error: { 
-            message: 'No se puede conectar al servidor de autenticación. Verifica tu conexión a internet.' 
-          } 
+        return {
+          error: {
+            message: 'El servicio de Supabase no está disponible. Puede estar inicializándose después de una restauración. Intenta nuevamente en unos minutos.'
+          }
         }
       }
-      
-      return { 
-        error: { 
-          message: error instanceof Error ? error.message : 'Error desconocido durante el inicio de sesión' 
-        } 
+
+      return {
+        error: {
+          message: error instanceof Error ? error.message : 'Error desconocido durante el inicio de sesión'
+        }
       }
     }
   }
@@ -118,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           if (mounted) {
             setUser(null)
@@ -127,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           return
         }
-        
+
         if (session?.user && mounted) {
           setUser(session.user)
           const profileData = createProfileFromUser(session.user)
@@ -161,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null)
           setProfile(null)
         }
-        
+
         if (mounted) {
           setLoading(false)
         }

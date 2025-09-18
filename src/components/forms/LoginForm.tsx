@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRouter } from 'next/navigation'
 import { logDiagnostics } from '@/lib/supabase/diagnostics'
+import { checkSupabaseServiceStatus } from '@/lib/supabase/service-status'
 
 interface LoginFormData {
   email: string
@@ -14,6 +15,7 @@ interface LoginFormData {
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [retryStatus, setRetryStatus] = useState<string | null>(null)
   const { signIn, user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
 
@@ -57,9 +59,25 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     setError(null)
+    setRetryStatus(null)
 
     try {
+      // Show retry status for user feedback
+      const originalConsoleLog = console.log
+      console.log = (...args) => {
+        if (args[0]?.includes('retrying')) {
+          setRetryStatus('Reintentando conexión...')
+        } else if (args[0]?.includes('initializing')) {
+          setRetryStatus('Servicio inicializándose, reintentando...')
+        }
+        originalConsoleLog(...args)
+      }
+
       const { error } = await signIn(data.email, data.password)
+
+      // Restore original console.log
+      console.log = originalConsoleLog
+      setRetryStatus(null)
 
       if (error) {
         console.error('Login error:', error)
@@ -79,6 +97,7 @@ export default function LoginForm() {
       console.error('Unexpected login error:', err)
       setError('Error inesperado al iniciar sesión')
       setIsLoading(false)
+      setRetryStatus(null)
     }
   }
 
@@ -91,6 +110,25 @@ export default function LoginForm() {
       {error && (
         <div className="alert alert-danger" role="alert">
           {error}
+          {error.includes('inicializándose') && (
+            <div className="mt-2">
+              <small className="text-muted">
+                <i className="bi bi-info-circle me-1"></i>
+                Los proyectos restaurados pueden tardar hasta 5 minutos en estar completamente operativos.
+              </small>
+            </div>
+          )}
+        </div>
+      )}
+
+      {retryStatus && (
+        <div className="alert alert-info" role="alert">
+          <div className="d-flex align-items-center">
+            <div className="spinner-border spinner-border-sm me-2" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+            {retryStatus}
+          </div>
         </div>
       )}
 
@@ -159,19 +197,37 @@ export default function LoginForm() {
         </button>
       </form>
 
-      {/* Diagnostic button - only show in development or when there are connection issues */}
-      {(process.env.NODE_ENV === 'development' || error?.includes('fetch') || error?.includes('CORS')) && (
+      {/* Diagnostic and service status buttons - only show when there are connection issues */}
+      {(error?.includes('fetch') || error?.includes('CORS') || error?.includes('inicializándose')) && (
         <div className="mt-3">
-          <button
-            type="button"
-            className="btn btn-outline-secondary btn-sm w-100"
-            onClick={() => {
-              console.log('Running manual diagnostics...')
-              logDiagnostics()
-            }}
-          >
-            🔍 Ejecutar Diagnósticos de Conexión
-          </button>
+          <div className="row g-2">
+            <div className="col-6">
+              <button
+                type="button"
+                className="btn btn-outline-info btn-sm w-100"
+                onClick={async () => {
+                  console.log('Checking service status...')
+                  const status = await checkSupabaseServiceStatus()
+                  console.log('Service Status:', status)
+                  alert(`Estado del Servicio:\n${status.message}\n\nAuth: ${status.services.auth ? '✅' : '❌'}\nAPI: ${status.services.api ? '✅' : '❌'}`)
+                }}
+              >
+                📊 Estado del Servicio
+              </button>
+            </div>
+            <div className="col-6">
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm w-100"
+                onClick={() => {
+                  console.log('Running manual diagnostics...')
+                  logDiagnostics()
+                }}
+              >
+                🔍 Diagnósticos
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
