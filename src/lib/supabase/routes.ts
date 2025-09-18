@@ -159,16 +159,21 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
     const routeDate = date || new Date().toISOString().split('T')[0];
 
     // First get the route for the collector and date
-    const { data: route } = await supabase
+    const { data: routes, error: routeError } = await supabase
       .from('routes')
       .select('id')
       .eq('collector_id', user.id)
-      .eq('route_date', routeDate)
-      .single();
+      .eq('route_date', routeDate);
 
-    if (!route) {
+    if (routeError) {
+      return { data: [], error: routeError.message };
+    }
+
+    if (!routes || routes.length === 0) {
       return { data: [], error: null }; // No route assigned for this date
     }
+
+    const route = routes[0];
 
     // Then get the assignments with related data
     const { data, error } = await supabase
@@ -219,19 +224,27 @@ export async function getCollectorRouteProgress(date?: string): Promise<{
     const routeDate = date || new Date().toISOString().split('T')[0];
 
     // Get route for the date
-    const { data: route } = await supabase
+    const { data: routes, error: routeError } = await supabase
       .from('routes')
       .select('id')
       .eq('collector_id', user.id)
-      .eq('route_date', routeDate)
-      .single();
+      .eq('route_date', routeDate);
 
-    if (!route) {
+    if (routeError) {
+      return { 
+        data: { total: 0, visited: 0, paid: 0, notPaid: 0, absent: 0, totalCollected: 0, totalExpected: 0 }, 
+        error: routeError.message 
+      };
+    }
+
+    if (!routes || routes.length === 0) {
       return { 
         data: { total: 0, visited: 0, paid: 0, notPaid: 0, absent: 0, totalCollected: 0, totalExpected: 0 }, 
         error: null 
       };
     }
+
+    const route = routes[0];
 
     // Get assignments with payment info
     const { data: assignments, error } = await supabase
