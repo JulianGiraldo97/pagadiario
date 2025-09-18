@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRouter } from 'next/navigation'
+import { logDiagnostics } from '@/lib/supabase/diagnostics'
 
 interface LoginFormData {
   email: string
@@ -61,12 +62,21 @@ export default function LoginForm() {
       const { error } = await signIn(data.email, data.password)
 
       if (error) {
+        console.error('Login error:', error)
+        
+        // Run diagnostics on error
+        if (error.message?.includes('fetch') || error.message?.includes('CORS') || error.message?.includes('502')) {
+          console.log('Running Supabase diagnostics due to connection error...')
+          logDiagnostics()
+        }
+        
         setError(error.message || 'Error al iniciar sesión')
         setIsLoading(false)
       }
       // If successful, the useEffect will handle the redirect
       // Don't set isLoading to false here - let the redirect happen
     } catch (err) {
+      console.error('Unexpected login error:', err)
       setError('Error inesperado al iniciar sesión')
       setIsLoading(false)
     }
@@ -148,6 +158,22 @@ export default function LoginForm() {
           )}
         </button>
       </form>
+
+      {/* Diagnostic button - only show in development or when there are connection issues */}
+      {(process.env.NODE_ENV === 'development' || error?.includes('fetch') || error?.includes('CORS')) && (
+        <div className="mt-3">
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm w-100"
+            onClick={() => {
+              console.log('Running manual diagnostics...')
+              logDiagnostics()
+            }}
+          >
+            🔍 Ejecutar Diagnósticos de Conexión
+          </button>
+        </div>
+      )}
     </>
   )
 }

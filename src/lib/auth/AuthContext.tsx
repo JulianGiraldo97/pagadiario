@@ -50,18 +50,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with Supabase...')
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
+        console.error('Supabase auth error:', error)
+        
+        // Handle specific error types
+        if (error.message.includes('fetch')) {
+          return { 
+            error: { 
+              message: 'Error de conexión. Verifica tu conexión a internet y que el servicio de Supabase esté disponible.' 
+            } 
+          }
+        }
+        
+        if (error.message.includes('CORS')) {
+          return { 
+            error: { 
+              message: 'Error de configuración CORS. Contacta al administrador del sistema.' 
+            } 
+          }
+        }
+        
         return { error }
       }
 
+      console.log('Sign in successful')
       return { error: null }
     } catch (error) {
-      return { error }
+      console.error('Unexpected error during sign in:', error)
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { 
+          error: { 
+            message: 'No se puede conectar al servidor de autenticación. Verifica tu conexión a internet.' 
+          } 
+        }
+      }
+      
+      return { 
+        error: { 
+          message: error instanceof Error ? error.message : 'Error desconocido durante el inicio de sesión' 
+        } 
+      }
     }
   }
 

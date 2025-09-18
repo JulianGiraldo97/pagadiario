@@ -158,40 +158,46 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
 
     const routeDate = date || new Date().toISOString().split('T')[0];
 
-    // First get the route for the collector and date
-    const { data: routes, error: routeError } = await supabase
-      .from('routes')
-      .select('id')
-      .eq('collector_id', user.id)
-      .eq('route_date', routeDate);
-
-    if (routeError) {
-      return { data: [], error: routeError.message };
-    }
-
-    if (!routes || routes.length === 0) {
-      return { data: [], error: null }; // No route assigned for this date
-    }
-
-    const route = routes[0];
-
-    // Then get the assignments with related data
-    const { data, error } = await supabase
-      .from('route_assignments')
-      .select(`
-        *,
-        client:clients(id, name, address, phone),
-        payment_schedule:payment_schedule(id, due_date, amount, status),
-        payment:payments(id, amount_paid, payment_status, evidence_photo_url, notes, recorded_at)
-      `)
-      .eq('route_id', route.id)
-      .order('visit_order');
+    // Use the database function to get collector's daily route
+    const { data, error } = await supabase.rpc('get_collector_daily_route', {
+      collector_id_param: user.id,
+      route_date_param: routeDate
+    });
 
     if (error) {
       return { data: [], error: error.message };
     }
 
-    return { data: data || [], error: null };
+    // Transform the data to match the expected format
+    const transformedData = (data || []).map((item: any) => ({
+      id: item.route_assignment_id,
+      route_id: '', // Not provided by the function, but not needed for display
+      client_id: item.client_id,
+      payment_schedule_id: item.payment_schedule_id,
+      visit_order: item.visit_order,
+      client: {
+        id: item.client_id,
+        name: item.client_name,
+        address: item.client_address,
+        phone: item.client_phone
+      },
+      payment_schedule: item.payment_schedule_id ? {
+        id: item.payment_schedule_id,
+        due_date: new Date().toISOString().split('T')[0], // Default to today
+        amount: item.amount_due,
+        status: 'pending'
+      } : null,
+      payment: item.payment_status && item.payment_status !== 'pending' ? {
+        id: '', // Not provided by function
+        amount_paid: item.amount_due || 0,
+        payment_status: item.payment_status,
+        evidence_photo_url: null,
+        notes: null,
+        recorded_at: new Date().toISOString()
+      } : null
+    }));
+
+    return { data: transformedData, error: null };
   } catch (error) {
     return { data: [], error: error instanceof Error ? error.message : 'Error desconocido' };
   }
