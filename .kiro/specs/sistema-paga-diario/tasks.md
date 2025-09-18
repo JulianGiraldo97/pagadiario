@@ -51,7 +51,7 @@
   - Implementar validaciones para evitar conflictos de asignación
   - _Requerimientos: 3.1, 3.4_
 
-- [ ] 8. Desarrollo de la vista de cobrador y ruta diaria
+- [x] 8. Desarrollo de la vista de cobrador y ruta diaria
   - Crear dashboard de cobrador con lista de clientes del día
   - Implementar componente de visualización de información de cliente y deuda
   - Crear navegación optimizada para móvil entre clientes de la ruta

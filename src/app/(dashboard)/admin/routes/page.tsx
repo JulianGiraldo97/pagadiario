@@ -8,11 +8,11 @@ import Modal from '@/components/ui/Modal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { 
   getAllRoutes, 
-  getAllCollectors, 
   getClientsWithActiveDebts, 
   createRoute, 
   deleteRoute 
 } from '@/lib/supabase/routes';
+import { getAllCollectors } from '@/lib/supabase/collectors';
 import type { 
   RouteWithAssignments, 
   Profile, 
