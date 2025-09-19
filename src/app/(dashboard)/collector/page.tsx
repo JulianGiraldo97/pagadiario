@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCollectorDailyRoute, getCollectorRouteProgress } from '@/lib/supabase/routes';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useTouchGestures } from '@/hooks/useTouchGestures';
 import ClientCard from '@/components/ui/ClientCard';
 import RouteProgress from '@/components/ui/RouteProgress';
 import RouteNavigation from '@/components/ui/RouteNavigation';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import NetworkIndicator from '@/components/ui/NetworkIndicator';
 import type { RouteAssignmentWithDetails } from '@/lib/types';
 
 export default function CollectorDashboard() {
@@ -29,6 +31,21 @@ export default function CollectorDashboard() {
   const [currentClientIndex, setCurrentClientIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Touch gestures for mobile navigation
+  const gestureRef = useTouchGestures<HTMLDivElement>({
+    onSwipeLeft: () => {
+      if (currentClientIndex < assignments.length - 1) {
+        setCurrentClientIndex(currentClientIndex + 1);
+      }
+    },
+    onSwipeRight: () => {
+      if (currentClientIndex > 0) {
+        setCurrentClientIndex(currentClientIndex - 1);
+      }
+    },
+    threshold: 50
+  });
 
   // Load route data
   const loadRouteData = async (date: string) => {
@@ -140,12 +157,15 @@ export default function CollectorDashboard() {
   // Mobile layout
   if (isMobile) {
     return (
-      <div className="pb-5">
+      <div className="pb-5" ref={gestureRef}>
         <SuccessAlert />
         
-        {/* Header with date selector */}
+        {/* Header with date selector and network status */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4 className="mb-0">Mi Ruta</h4>
+          <div>
+            <h4 className="mb-0">Mi Ruta</h4>
+            <NetworkIndicator className="mt-1" />
+          </div>
           <input
             type="date"
             className="form-control form-control-sm"
@@ -189,22 +209,32 @@ export default function CollectorDashboard() {
             </div>
 
             {/* Quick actions */}
-            <div className="fixed-bottom bg-white border-top p-3">
-              <div className="d-flex gap-2">
+            <div className="fixed-bottom bg-white border-top p-3 shadow-lg">
+              <div className="d-flex gap-2 align-items-center">
                 <button
                   className="btn btn-primary flex-grow-1"
                   onClick={() => handlePaymentClick(assignments[currentClientIndex])}
                   disabled={!!assignments[currentClientIndex]?.payment}
+                  style={{ minHeight: '48px' }}
                 >
                   <i className="bi bi-cash me-1"></i>
-                  Registrar Pago
+                  {assignments[currentClientIndex]?.payment ? 'Editar Registro' : 'Registrar Pago'}
                 </button>
                 <button
                   className="btn btn-outline-secondary"
                   onClick={refreshData}
+                  style={{ minHeight: '48px', minWidth: '48px' }}
                 >
                   <i className="bi bi-arrow-clockwise"></i>
                 </button>
+              </div>
+              
+              {/* Swipe hint */}
+              <div className="text-center mt-2">
+                <small className="text-muted">
+                  <i className="bi bi-hand-index me-1"></i>
+                  Desliza para navegar • {currentClientIndex + 1} de {assignments.length}
+                </small>
               </div>
             </div>
           </>

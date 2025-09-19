@@ -80,7 +80,7 @@
   - Implementar validaciones de seguridad en formularios
   - _Requerimientos: 1.3, 1.4, 5.6_
 
-- [ ] 12. Optimización para dispositivos móviles
+- [x] 12. Optimización para dispositivos móviles
   - Optimizar componentes de cobrador para pantallas pequeñas
   - Implementar gestos táctiles para navegación en móvil
   - Crear indicadores de conectividad y manejo de estados offline

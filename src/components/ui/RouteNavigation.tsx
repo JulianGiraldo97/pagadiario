@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTouchGestures } from '@/hooks/useTouchGestures';
 import type { RouteAssignmentWithDetails } from '@/lib/types';
 
 interface RouteNavigationProps {
@@ -24,6 +25,21 @@ export default function RouteNavigation({
   
   const currentClient = assignments[currentIndex]?.client;
 
+  // Touch gesture support for mobile navigation
+  const gestureRef = useTouchGestures<HTMLDivElement>({
+    onSwipeLeft: () => {
+      if (canGoNext) {
+        onNavigate(currentIndex + 1);
+      }
+    },
+    onSwipeRight: () => {
+      if (canGoPrevious) {
+        onNavigate(currentIndex - 1);
+      }
+    },
+    threshold: 50
+  });
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -44,7 +60,7 @@ export default function RouteNavigation({
 
   if (isMobile) {
     return (
-      <div className="sticky-top bg-white border-bottom shadow-sm">
+      <div className="sticky-top bg-white border-bottom shadow-sm" ref={gestureRef}>
         <div className="container-fluid p-3">
           {/* Current client info */}
           <div className="d-flex justify-content-between align-items-center mb-2">
@@ -89,6 +105,14 @@ export default function RouteNavigation({
               Siguiente
               <i className="bi bi-chevron-right ms-1"></i>
             </button>
+          </div>
+
+          {/* Swipe hint */}
+          <div className="text-center mt-2">
+            <small className="text-muted">
+              <i className="bi bi-hand-index me-1"></i>
+              Desliza para navegar entre clientes
+            </small>
           </div>
 
           {/* Quick navigation dropdown */}

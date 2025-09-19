@@ -79,6 +79,7 @@ h1, h2, h3, h4, h5, h6, p, div, span {
   .card {
     margin-bottom: 1rem;
     border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .card-body {
@@ -87,14 +88,82 @@ h1, h2, h3, h4, h5, h6, p, div, span {
 
   /* Touch-friendly buttons */
   .btn {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Improved form controls for mobile */
   .form-control, .form-select {
     font-size: 16px; /* Prevents zoom on iOS */
     padding: 0.75rem;
+    min-height: 48px;
+  }
+
+  /* Mobile gesture support */
+  .swipe-container {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Performance optimizations */
+  .card, .btn, .form-control {
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  /* Mobile-specific animations */
+  .mobile-slide-enter {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  .mobile-slide-enter-active {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .mobile-slide-exit {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .mobile-slide-exit-active {
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Improved touch targets */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mobile-optimized images */
+  .mobile-image {
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.5rem;
+  }
+
+  /* Sticky elements optimization */
+  .sticky-top {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Fixed bottom optimization */
+  .fixed-bottom {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -219,8 +288,97 @@ h1, h2, h3, h4, h5, h6, p, div, span {
   font-size: 1.25rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .quick-action-btn:hover {
   transform: scale(1.05);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* Network status indicator */
+.network-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1050;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile loading states */
+.mobile-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1060;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Offline indicator */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #dc3545;
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  z-index: 1070;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Mobile-optimized modals */
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .modal-content {
+    border-radius: 1rem;
+  }
+
+  .modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  .card-body, .btn, .form-control {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
 }
