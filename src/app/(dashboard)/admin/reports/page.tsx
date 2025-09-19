@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { useAuth } from '@/lib/auth/AuthContext'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import ReportFilters from '@/components/forms/ReportFilters'
 import MetricsCards from '@/components/ui/MetricsCards'
 import CollectionChart from '@/components/charts/CollectionChart'
@@ -19,8 +21,10 @@ import {
   PaymentsByStatus,
   CollectorPerformance
 } from '@/lib/supabase/reports'
+import { securityLogger, SecurityLogLevel, SecurityEventType, requireRole } from '@/lib/utils/security'
 
-export default function ReportsPage() {
+function ReportsPageContent() {
+  const { user, profile } = useAuth()
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<IReportFilters>({})
   const [dailySummary, setDailySummary] = useState<DailyCollectionSummary[]>([])
@@ -38,6 +42,27 @@ export default function ReportsPage() {
   })
 
   useEffect(() => {
+    // Validate admin access on component mount
+    if (profile) {
+      try {
+        requireRole(profile.role, 'admin')
+        
+        // Log admin access to reports
+        securityLogger.log({
+          level: SecurityLogLevel.INFO,
+          event: SecurityEventType.DATA_ACCESS,
+          userId: user?.id,
+          userRole: profile.role,
+          path: '/admin/reports',
+          success: true,
+          details: { action: 'reports_page_access' }
+        })
+      } catch (error) {
+        toast.error('Acceso denegado: Solo administradores pueden ver reportes')
+        return
+      }
+    }
+
     // Set default filters (last 30 days)
     const endDate = new Date().toISOString().split('T')[0]
     const startDate = new Date()
@@ -50,11 +75,34 @@ export default function ReportsPage() {
     
     setFilters(defaultFilters)
     loadReportData(defaultFilters)
-  }, [])
+  }, [profile, user])
 
   const loadReportData = async (currentFilters: IReportFilters) => {
+    if (!profile) return
+    
+    try {
+      requireRole(profile.role, 'admin')
+    } catch (error) {
+      toast.error('Acceso denegado para cargar datos de reportes')
+      return
+    }
+
     setLoading(true)
     try {
+      // Log report data access
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.DATA_ACCESS,
+        userId: user?.id,
+        userRole: profile.role,
+        path: '/admin/reports',
+        success: true,
+        details: { 
+          action: 'load_report_data',
+          filters: currentFilters
+        }
+      })
+
       const [summary, payments, performance, metrics] = await Promise.all([
         getDailyCollectionSummary(currentFilters),
         getPaymentsByStatus(currentFilters),
@@ -66,8 +114,35 @@ export default function ReportsPage() {
       setPaymentsByStatus(payments)
       setCollectorPerformance(performance as CollectorPerformance[])
       setTotalMetrics(metrics)
+
+      // Log successful data load
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.DATA_ACCESS,
+        userId: user?.id,
+        userRole: profile.role,
+        success: true,
+        details: { 
+          action: 'report_data_loaded',
+          recordCount: summary.length + payments.length + performance.length
+        }
+      })
     } catch (error) {
       console.error('Error loading report data:', error)
+      
+      // Log error
+      securityLogger.log({
+        level: SecurityLogLevel.ERROR,
+        event: SecurityEventType.DATA_ACCESS,
+        userId: user?.id,
+        userRole: profile?.role,
+        success: false,
+        details: { 
+          action: 'load_report_data_error',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      })
+      
       toast.error('Error al cargar los datos del reporte')
     } finally {
       setLoading(false)
@@ -132,5 +207,13 @@ export default function ReportsPage() {
 
       <ReportsTable data={dailySummary} />
     </div>
+  )
+}
+
+export default function ReportsPage() {
+  return (
+    <ProtectedRoute allowedRoles={['admin']} requireExactRole={true}>
+      <ReportsPageContent />
+    </ProtectedRoute>
   )
 }

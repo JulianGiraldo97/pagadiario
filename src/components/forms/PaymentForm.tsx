@@ -3,9 +3,19 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { recordPayment, updatePayment } from '@/lib/supabase/payments';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import type { RecordPaymentForm, Payment, PaymentStatus } from '@/lib/types';
+import { 
+  validatePaymentForm, 
+  validateFileUpload,
+  sanitizeAmount,
+  sanitizeString,
+  securityLogger,
+  SecurityLogLevel,
+  SecurityEventType
+} from '@/lib/utils/security';
 
 interface PaymentFormProps {
   assignmentId: string;
@@ -33,6 +43,7 @@ export default function PaymentForm({
   onSuccess,
   onCancel
 }: PaymentFormProps) {
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(
@@ -59,25 +70,51 @@ export default function PaymentForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Solo se permiten archivos de imagen');
-        return;
-      }
+      try {
+        // Enhanced security validation
+        validateFileUpload(file);
+        
+        // Log file upload attempt
+        securityLogger.log({
+          level: SecurityLogLevel.INFO,
+          event: SecurityEventType.FILE_UPLOAD,
+          userId: user?.id,
+          userRole: profile?.role,
+          details: { 
+            action: 'payment_evidence_upload',
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            assignmentId
+          }
+        });
 
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('El archivo no puede ser mayor a 5MB');
-        return;
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreviewImage(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+        setError(null);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Error de validación de archivo';
+        setError(errorMessage);
+        
+        // Log validation failure
+        securityLogger.log({
+          level: SecurityLogLevel.WARNING,
+          event: SecurityEventType.INVALID_INPUT,
+          userId: user?.id,
+          userRole: profile?.role,
+          details: { 
+            action: 'file_validation_failed',
+            error: errorMessage,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type
+          }
+        });
       }
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-      setError(null);
     }
   };
 
@@ -94,14 +131,61 @@ export default function PaymentForm({
     setError(null);
 
     try {
-      const paymentData: RecordPaymentForm = {
+      // Log payment submission attempt
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.DATA_MODIFICATION,
+        userId: user?.id,
+        userRole: profile?.role,
+        details: { 
+          action: existingPayment ? 'update_payment' : 'record_payment',
+          assignmentId,
+          paymentStatus: data.payment_status,
+          paymentId: existingPayment?.id
+        }
+      });
+
+      // Validate payment form data
+      const formValidation = validatePaymentForm({
         route_assignment_id: assignmentId,
         payment_schedule_id: paymentScheduleId,
         amount_paid: data.payment_status === 'paid' ? data.amount_paid : undefined,
         payment_status: data.payment_status,
+        notes: data.notes
+      });
+
+      if (!formValidation.isValid) {
+        setError('Datos de formulario inválidos: ' + Object.values(formValidation.errors).join(', '));
+        
+        // Log validation failure
+        securityLogger.log({
+          level: SecurityLogLevel.WARNING,
+          event: SecurityEventType.INVALID_INPUT,
+          userId: user?.id,
+          userRole: profile?.role,
+          details: { 
+            action: 'payment_form_validation_failed',
+            errors: formValidation.errors
+          }
+        });
+        
+        return;
+      }
+
+      // Sanitize and prepare payment data
+      const paymentData: RecordPaymentForm = {
+        route_assignment_id: assignmentId,
+        payment_schedule_id: paymentScheduleId,
+        amount_paid: data.payment_status === 'paid' ? sanitizeAmount(data.amount_paid) : undefined,
+        payment_status: data.payment_status,
         evidence_photo: data.evidence_photo?.[0],
-        notes: data.notes.trim() || undefined
+        notes: data.notes.trim() ? sanitizeString(data.notes.trim(), 1000) : undefined
       };
+
+      // Additional file validation if present
+      if (paymentData.evidence_photo) {
+        validateFileUpload(paymentData.evidence_photo);
+      }
 
       let result;
       if (existingPayment) {
@@ -112,10 +196,41 @@ export default function PaymentForm({
 
       if (result.error) {
         setError(result.error);
+        
+        // Log submission error
+        securityLogger.log({
+          level: SecurityLogLevel.ERROR,
+          event: SecurityEventType.DATA_MODIFICATION,
+          userId: user?.id,
+          userRole: profile?.role,
+          success: false,
+          details: { 
+            action: existingPayment ? 'update_payment_error' : 'record_payment_error',
+            error: result.error,
+            assignmentId
+          }
+        });
+        
         return;
       }
 
       if (result.data) {
+        // Log successful payment submission
+        securityLogger.log({
+          level: SecurityLogLevel.INFO,
+          event: SecurityEventType.DATA_MODIFICATION,
+          userId: user?.id,
+          userRole: profile?.role,
+          success: true,
+          details: { 
+            action: existingPayment ? 'payment_updated' : 'payment_recorded',
+            paymentId: result.data.id,
+            assignmentId,
+            paymentStatus: result.data.payment_status,
+            amountPaid: result.data.amount_paid
+          }
+        });
+
         // Check if photo upload failed but payment succeeded
         if (data.evidence_photo?.[0] && !result.data.evidence_photo_url) {
           toast('⚠️ Pago registrado correctamente, pero no se pudo subir la foto de evidencia. Contacta al administrador para configurar el almacenamiento.', {
@@ -126,7 +241,22 @@ export default function PaymentForm({
         onSuccess(result.data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      setError(errorMessage);
+      
+      // Log unexpected error
+      securityLogger.log({
+        level: SecurityLogLevel.ERROR,
+        event: SecurityEventType.DATA_MODIFICATION,
+        userId: user?.id,
+        userRole: profile?.role,
+        success: false,
+        details: { 
+          action: 'payment_submission_error',
+          error: errorMessage,
+          assignmentId
+        }
+      });
     } finally {
       setLoading(false);
     }

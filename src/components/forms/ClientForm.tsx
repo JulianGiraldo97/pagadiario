@@ -2,7 +2,17 @@
 
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
 import type { Client, CreateClientForm } from '@/lib/types';
+import { 
+  validateClientForm, 
+  sanitizeName, 
+  sanitizeAddress, 
+  sanitizePhone,
+  securityLogger,
+  SecurityLogLevel,
+  SecurityEventType
+} from '@/lib/utils/security';
 
 interface ClientFormProps {
   client?: Client;
@@ -12,10 +22,12 @@ interface ClientFormProps {
 }
 
 export default function ClientForm({ client, onSubmit, onCancel, isLoading = false }: ClientFormProps) {
+  const { user, profile } = useAuth();
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
+    setError
   } = useForm<CreateClientForm>({
     defaultValues: {
       name: client?.name || '',
@@ -29,9 +41,81 @@ export default function ClientForm({ client, onSubmit, onCancel, isLoading = fal
   const handleFormSubmit = async (data: CreateClientForm) => {
     try {
       setSubmitError('');
-      await onSubmit(data);
+      
+      // Log form submission attempt
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.DATA_MODIFICATION,
+        userId: user?.id,
+        userRole: profile?.role,
+        details: { 
+          action: client ? 'update_client' : 'create_client',
+          clientId: client?.id
+        }
+      });
+
+      // Validate and sanitize input data
+      const validation = validateClientForm(data);
+      if (!validation.isValid) {
+        // Set form errors
+        Object.entries(validation.errors).forEach(([field, message]) => {
+          setError(field as keyof CreateClientForm, { message });
+        });
+        
+        // Log validation failure
+        securityLogger.log({
+          level: SecurityLogLevel.WARNING,
+          event: SecurityEventType.INVALID_INPUT,
+          userId: user?.id,
+          userRole: profile?.role,
+          details: { 
+            action: 'client_form_validation_failed',
+            errors: validation.errors
+          }
+        });
+        
+        return;
+      }
+
+      // Sanitize data before submission
+      const sanitizedData: CreateClientForm = {
+        name: sanitizeName(data.name),
+        address: sanitizeAddress(data.address),
+        phone: data.phone ? sanitizePhone(data.phone) : undefined
+      };
+
+      await onSubmit(sanitizedData);
+      
+      // Log successful submission
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.DATA_MODIFICATION,
+        userId: user?.id,
+        userRole: profile?.role,
+        success: true,
+        details: { 
+          action: client ? 'client_updated' : 'client_created',
+          clientId: client?.id
+        }
+      });
+      
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Error al guardar el cliente');
+      const errorMessage = error instanceof Error ? error.message : 'Error al guardar el cliente';
+      setSubmitError(errorMessage);
+      
+      // Log submission error
+      securityLogger.log({
+        level: SecurityLogLevel.ERROR,
+        event: SecurityEventType.DATA_MODIFICATION,
+        userId: user?.id,
+        userRole: profile?.role,
+        success: false,
+        details: { 
+          action: client ? 'update_client_error' : 'create_client_error',
+          error: errorMessage,
+          clientId: client?.id
+        }
+      });
     }
   };
 

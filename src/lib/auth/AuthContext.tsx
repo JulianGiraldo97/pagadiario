@@ -52,8 +52,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const maxRetries = 3
     const retryDelay = 2000 // 2 seconds
 
+    // Import security logger dynamically to avoid circular dependencies
+    const { securityLogger, SecurityLogLevel, SecurityEventType } = await import('@/lib/utils/security')
+
     try {
       console.log(`Attempting to sign in with Supabase... (attempt ${retryCount + 1}/${maxRetries + 1})`)
+
+      // Log login attempt
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.LOGIN_ATTEMPT,
+        details: { 
+          email: email.toLowerCase(),
+          attempt: retryCount + 1,
+          maxRetries: maxRetries + 1
+        }
+      })
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -62,6 +76,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Supabase auth error:', error)
+
+        // Log login failure
+        securityLogger.log({
+          level: SecurityLogLevel.WARNING,
+          event: SecurityEventType.LOGIN_FAILURE,
+          details: { 
+            email: email.toLowerCase(),
+            error: error.message,
+            attempt: retryCount + 1
+          }
+        })
 
         // Handle 502 Bad Gateway specifically (service initializing)
         if (error.message.includes('fetch') && retryCount < maxRetries) {
@@ -91,9 +116,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('Sign in successful')
+      
+      // Log successful login
+      if (data.user) {
+        securityLogger.log({
+          level: SecurityLogLevel.INFO,
+          event: SecurityEventType.LOGIN_SUCCESS,
+          userId: data.user.id,
+          details: { 
+            email: email.toLowerCase(),
+            attempt: retryCount + 1
+          },
+          success: true
+        })
+      }
+      
       return { error: null }
     } catch (error) {
       console.error('Unexpected error during sign in:', error)
+
+      // Log unexpected error
+      securityLogger.log({
+        level: SecurityLogLevel.ERROR,
+        event: SecurityEventType.LOGIN_FAILURE,
+        details: { 
+          email: email.toLowerCase(),
+          error: error instanceof Error ? error.message : 'Unknown error',
+          attempt: retryCount + 1,
+          type: 'unexpected_error'
+        }
+      })
 
       // Retry on network errors
       if (error instanceof TypeError && error.message.includes('fetch') && retryCount < maxRetries) {
@@ -120,6 +172,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Import security logger dynamically
+      const { securityLogger, SecurityLogLevel, SecurityEventType } = await import('@/lib/utils/security')
+      
+      // Log logout attempt
+      securityLogger.log({
+        level: SecurityLogLevel.INFO,
+        event: SecurityEventType.LOGOUT,
+        userId: user?.id,
+        userRole: profile?.role,
+        details: { action: 'user_logout' }
+      })
+
       await supabase.auth.signOut()
       setUser(null)
       setProfile(null)
