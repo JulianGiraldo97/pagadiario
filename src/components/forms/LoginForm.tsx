@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRouter } from 'next/navigation'
+import { useErrorHandler } from '@/hooks/useErrorHandler'
+import { useToast } from '@/components/ui/Toast'
+import { LoadingButton } from '@/components/ui/LoadingSpinner'
 
 
 interface LoginFormData {
@@ -13,10 +16,11 @@ interface LoginFormData {
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [retryStatus, setRetryStatus] = useState<string | null>(null)
   const { signIn, user, profile, loading: authLoading } = useAuth()
   const router = useRouter()
+  const { handleError } = useErrorHandler()
+  const { showInfo } = useToast()
 
   const {
     register,
@@ -57,7 +61,6 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
-    setError(null)
     setRetryStatus(null)
 
     try {
@@ -68,6 +71,7 @@ export default function LoginForm() {
           setRetryStatus('Reintentando conexión...')
         } else if (args[0]?.includes('initializing')) {
           setRetryStatus('Servicio inicializándose, reintentando...')
+          showInfo('Inicializando', 'El servicio se está inicializando, esto puede tomar unos minutos...')
         }
         originalConsoleLog(...args)
       }
@@ -79,18 +83,13 @@ export default function LoginForm() {
       setRetryStatus(null)
 
       if (error) {
-        console.error('Login error:', error)
-        
-
-        
-        setError(error.message || 'Error al iniciar sesión')
+        handleError(error, 'inicio de sesión')
         setIsLoading(false)
       }
       // If successful, the useEffect will handle the redirect
       // Don't set isLoading to false here - let the redirect happen
     } catch (err) {
-      console.error('Unexpected login error:', err)
-      setError('Error inesperado al iniciar sesión')
+      handleError(err, 'inicio de sesión')
       setIsLoading(false)
       setRetryStatus(null)
     }
@@ -102,19 +101,7 @@ export default function LoginForm() {
         <p className="text-muted">Inicia sesión para continuar</p>
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
-          {error.includes('inicializándose') && (
-            <div className="mt-2">
-              <small className="text-muted">
-                <i className="bi bi-info-circle me-1"></i>
-                Los proyectos restaurados pueden tardar hasta 5 minutos en estar completamente operativos.
-              </small>
-            </div>
-          )}
-        </div>
-      )}
+
 
       {retryStatus && (
         <div className="alert alert-info" role="alert">
@@ -176,20 +163,14 @@ export default function LoginForm() {
           )}
         </div>
 
-        <button
+        <LoadingButton
           type="submit"
-          className="btn btn-primary w-100"
-          disabled={isLoading}
+          className="w-100"
+          loading={isLoading}
+          variant="primary"
         >
-          {isLoading ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Iniciando sesión...
-            </>
-          ) : (
-            'Iniciar sesión'
-          )}
-        </button>
+          Iniciar sesión
+        </LoadingButton>
       </form>
 
 

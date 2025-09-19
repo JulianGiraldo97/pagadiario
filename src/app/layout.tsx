@@ -5,7 +5,8 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth/AuthContext'
 import BootstrapClient from '@/components/ui/BootstrapClient'
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration'
-import { Toaster } from 'react-hot-toast'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { ToastProvider } from '@/components/ui/Toast'
 
 export const metadata: Metadata = {
   title: 'Sistema de Paga Diario',
@@ -46,21 +47,15 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </ToastProvider>
+        </ErrorBoundary>
         <BootstrapClient />
         <ServiceWorkerRegistration />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-          }}
-        />
       </body>
     </html>
   )
