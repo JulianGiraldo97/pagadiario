@@ -158,47 +158,96 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
 
     const routeDate = date || new Date().toISOString().split('T')[0];
 
-    // Use the database function to get collector's daily route
-    const { data, error } = await supabase.rpc('get_collector_daily_route', {
-      collector_id_param: user.id,
-      route_date_param: routeDate
-    });
+    console.log('Getting collector daily route for:', { userId: user.id, routeDate });
 
-    if (error) {
-      return { data: [], error: error.message };
+    // Try using the database function first
+    try {
+      const { data: functionData, error: functionError } = await supabase.rpc('get_collector_daily_route', {
+        collector_id_param: user.id,
+        route_date_param: routeDate
+      });
+
+      if (!functionError && functionData && functionData.length > 0) {
+        console.log('Database function returned data:', functionData);
+        
+        // Transform the data to match the expected format
+        const transformedData = functionData.map((item: any) => ({
+          id: item.route_assignment_id,
+          route_id: '', // Not provided by the function, but not needed for display
+          client_id: item.client_id,
+          payment_schedule_id: item.payment_schedule_id,
+          visit_order: item.visit_order,
+          client: {
+            id: item.client_id,
+            name: item.client_name,
+            address: item.client_address,
+            phone: item.client_phone
+          },
+          payment_schedule: item.payment_schedule_id ? {
+            id: item.payment_schedule_id,
+            due_date: new Date().toISOString().split('T')[0], // Default to today
+            amount: item.amount_due,
+            status: 'pending'
+          } : null,
+          payment: item.payment_status && item.payment_status !== 'pending' ? {
+            id: '', // Not provided by function
+            amount_paid: item.amount_due || 0,
+            payment_status: item.payment_status,
+            evidence_photo_url: null,
+            notes: null,
+            recorded_at: new Date().toISOString()
+          } : null
+        }));
+
+        console.log('Transformed data:', transformedData);
+        return { data: transformedData, error: null };
+      }
+    } catch (functionErr) {
+      console.warn('Database function failed, falling back to direct query:', functionErr);
     }
 
-    // Transform the data to match the expected format
-    const transformedData = (data || []).map((item: any) => ({
-      id: item.route_assignment_id,
-      route_id: '', // Not provided by the function, but not needed for display
-      client_id: item.client_id,
-      payment_schedule_id: item.payment_schedule_id,
-      visit_order: item.visit_order,
-      client: {
-        id: item.client_id,
-        name: item.client_name,
-        address: item.client_address,
-        phone: item.client_phone
-      },
-      payment_schedule: item.payment_schedule_id ? {
-        id: item.payment_schedule_id,
-        due_date: new Date().toISOString().split('T')[0], // Default to today
-        amount: item.amount_due,
-        status: 'pending'
-      } : null,
-      payment: item.payment_status && item.payment_status !== 'pending' ? {
-        id: '', // Not provided by function
-        amount_paid: item.amount_due || 0,
-        payment_status: item.payment_status,
-        evidence_photo_url: null,
-        notes: null,
-        recorded_at: new Date().toISOString()
-      } : null
-    }));
+    // Fallback to direct query if function fails or returns no data
+    console.log('Using fallback direct query method');
+    
+    // First get the route for the collector and date
+    const { data: routes, error: routeError } = await supabase
+      .from('routes')
+      .select('id')
+      .eq('collector_id', user.id)
+      .eq('route_date', routeDate);
 
-    return { data: transformedData, error: null };
+    if (routeError) {
+      return { data: [], error: routeError.message };
+    }
+
+    if (!routes || routes.length === 0) {
+      return { data: [], error: null }; // No route assigned for this date
+    }
+
+    const route = routes[0];
+    console.log('Found route:', route);
+
+    // Then get the assignments with related data
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('route_assignments')
+      .select(`
+        *,
+        client:clients(id, name, address, phone),
+        payment_schedule:payment_schedule(id, due_date, amount, status),
+        payment:payments(id, amount_paid, payment_status, evidence_photo_url, notes, recorded_at)
+      `)
+      .eq('route_id', route.id)
+      .order('visit_order');
+
+    if (assignmentsError) {
+      return { data: [], error: assignmentsError.message };
+    }
+
+    console.log('Direct query assignments:', assignments);
+    return { data: assignments || [], error: null };
+
   } catch (error) {
+    console.error('Error in getCollectorDailyRoute:', error);
     return { data: [], error: error instanceof Error ? error.message : 'Error desconocido' };
   }
 }

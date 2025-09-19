@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRouter } from 'next/navigation'
-import { logDiagnostics } from '@/lib/supabase/diagnostics'
-import { checkSupabaseServiceStatus } from '@/lib/supabase/service-status'
+
 
 interface LoginFormData {
   email: string
@@ -82,11 +81,7 @@ export default function LoginForm() {
       if (error) {
         console.error('Login error:', error)
         
-        // Run diagnostics on error
-        if (error.message?.includes('fetch') || error.message?.includes('CORS') || error.message?.includes('502')) {
-          console.log('Running Supabase diagnostics due to connection error...')
-          logDiagnostics()
-        }
+
         
         setError(error.message || 'Error al iniciar sesión')
         setIsLoading(false)
@@ -197,39 +192,7 @@ export default function LoginForm() {
         </button>
       </form>
 
-      {/* Diagnostic and service status buttons - only show when there are connection issues */}
-      {(error?.includes('fetch') || error?.includes('CORS') || error?.includes('inicializándose')) && (
-        <div className="mt-3">
-          <div className="row g-2">
-            <div className="col-6">
-              <button
-                type="button"
-                className="btn btn-outline-info btn-sm w-100"
-                onClick={async () => {
-                  console.log('Checking service status...')
-                  const status = await checkSupabaseServiceStatus()
-                  console.log('Service Status:', status)
-                  alert(`Estado del Servicio:\n${status.message}\n\nAuth: ${status.services.auth ? '✅' : '❌'}\nAPI: ${status.services.api ? '✅' : '❌'}`)
-                }}
-              >
-                📊 Estado del Servicio
-              </button>
-            </div>
-            <div className="col-6">
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm w-100"
-                onClick={() => {
-                  console.log('Running manual diagnostics...')
-                  logDiagnostics()
-                }}
-              >
-                🔍 Diagnósticos
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   )
 }

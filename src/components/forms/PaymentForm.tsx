@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
 import { recordPayment, updatePayment } from '@/lib/supabase/payments';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import type { RecordPaymentForm, Payment, PaymentStatus } from '@/lib/types';
@@ -115,6 +116,13 @@ export default function PaymentForm({
       }
 
       if (result.data) {
+        // Check if photo upload failed but payment succeeded
+        if (data.evidence_photo?.[0] && !result.data.evidence_photo_url) {
+          toast('⚠️ Pago registrado correctamente, pero no se pudo subir la foto de evidencia. Contacta al administrador para configurar el almacenamiento.', {
+            duration: 6000,
+            style: { background: '#fff3cd', color: '#856404', border: '1px solid #ffeaa7' }
+          });
+        }
         onSuccess(result.data);
       }
     } catch (err) {
@@ -267,10 +275,24 @@ export default function PaymentForm({
               type="file"
               className="form-control"
               id="evidence_photo"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               capture="environment"
               {...register('evidence_photo', {
-                required: paymentStatus !== 'paid' && !previewImage ? 'La foto de evidencia es requerida' : false
+                required: paymentStatus !== 'paid' && !previewImage ? 'La foto de evidencia es requerida' : false,
+                validate: {
+                  fileType: (files: FileList | undefined) => {
+                    if (!files || files.length === 0) return true;
+                    const file = files[0];
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    return allowedTypes.includes(file.type) || 'Solo se permiten imágenes (JPEG, PNG, WebP)';
+                  },
+                  fileSize: (files: FileList | undefined) => {
+                    if (!files || files.length === 0) return true;
+                    const file = files[0];
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    return file.size <= maxSize || `El archivo no puede ser mayor a 5MB (actual: ${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+                  }
+                }
               })}
               onChange={handleImageChange}
             />

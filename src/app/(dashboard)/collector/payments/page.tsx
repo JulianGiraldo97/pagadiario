@@ -32,19 +32,32 @@ export default function PaymentsPage() {
     setError(null);
 
     try {
+      console.log('Loading assignment data for ID:', assignmentId);
+      
+      // Get the date from URL params or use current date
+      const routeDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
+      console.log('Using route date:', routeDate);
+      
       // Get route assignments to find the specific one
-      const routeResult = await getCollectorDailyRoute();
+      const routeResult = await getCollectorDailyRoute(routeDate);
       if (routeResult.error) {
+        console.error('Error loading route data:', routeResult.error);
         setError(routeResult.error);
         return;
       }
 
+      console.log('Route data loaded:', routeResult.data);
+      console.log('Looking for assignment with ID:', assignmentId);
+      console.log('Available assignment IDs:', routeResult.data.map(a => a.id));
+
       const foundAssignment = routeResult.data.find(a => a.id === assignmentId);
       if (!foundAssignment) {
-        setError('Asignación no encontrada');
+        console.error('Assignment not found. Available assignments:', routeResult.data);
+        setError(`Asignación no encontrada para la fecha ${routeDate}. ID buscado: ${assignmentId}`);
         return;
       }
 
+      console.log('Found assignment:', foundAssignment);
       setAssignment(foundAssignment);
 
       // Check if payment already exists
@@ -55,11 +68,12 @@ export default function PaymentsPage() {
         setExistingPayment(paymentResult.data);
       }
     } catch (err) {
+      console.error('Unexpected error loading assignment:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setLoading(false);
     }
-  }, [assignmentId]);
+  }, [assignmentId, searchParams]);
 
   useEffect(() => {
     if (!assignmentId) {
@@ -99,10 +113,32 @@ export default function PaymentsPage() {
         <div className="alert alert-danger" role="alert">
           <h4 className="alert-heading">Error</h4>
           <p>{error}</p>
-          <button className="btn btn-outline-danger" onClick={() => router.back()}>
-            <i className="bi bi-arrow-left me-1"></i>
-            Volver
-          </button>
+          
+          {/* Debug information */}
+          <div className="mt-3">
+            <details>
+              <summary className="text-muted">Información de depuración</summary>
+              <div className="mt-2 small">
+                <p><strong>Assignment ID:</strong> {assignmentId || 'No proporcionado'}</p>
+                <p><strong>Client ID:</strong> {clientId || 'No proporcionado'}</p>
+                <p><strong>Client Name:</strong> {clientName || 'No proporcionado'}</p>
+                <p><strong>Payment Schedule ID:</strong> {paymentScheduleId || 'No proporcionado'}</p>
+                <p><strong>Date:</strong> {searchParams.get('date') || 'No proporcionado'}</p>
+                <p><strong>URL:</strong> {window.location.href}</p>
+              </div>
+            </details>
+          </div>
+          
+          <div className="mt-3">
+            <button className="btn btn-outline-danger me-2" onClick={() => router.back()}>
+              <i className="bi bi-arrow-left me-1"></i>
+              Volver
+            </button>
+            <button className="btn btn-outline-secondary" onClick={() => window.location.reload()}>
+              <i className="bi bi-arrow-clockwise me-1"></i>
+              Reintentar
+            </button>
+          </div>
         </div>
       </div>
     );

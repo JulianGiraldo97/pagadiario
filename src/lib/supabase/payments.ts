@@ -16,6 +16,7 @@ export async function recordPayment(paymentData: RecordPaymentForm): Promise<{ d
     // Upload evidence photo if provided
     if (paymentData.evidence_photo) {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${paymentData.evidence_photo.name}`;
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('evidence-photos')
         .upload(fileName, paymentData.evidence_photo, {
@@ -24,7 +25,6 @@ export async function recordPayment(paymentData: RecordPaymentForm): Promise<{ d
         });
 
       if (uploadError) {
-        console.error('Error uploading evidence photo:', uploadError);
         return { data: null, error: `Error al subir la foto: ${uploadError.message}` };
       }
 
@@ -36,13 +36,12 @@ export async function recordPayment(paymentData: RecordPaymentForm): Promise<{ d
     }
 
     // Check if payment already exists for this assignment
-    const { data: existingPayment } = await supabase
+    const { data: existingPayments } = await supabase
       .from('payments')
       .select('id')
-      .eq('route_assignment_id', paymentData.route_assignment_id)
-      .single();
+      .eq('route_assignment_id', paymentData.route_assignment_id);
 
-    if (existingPayment) {
+    if (existingPayments && existingPayments.length > 0) {
       return { data: null, error: 'Ya existe un registro de pago para esta visita' };
     }
 
@@ -169,14 +168,14 @@ export async function getPaymentByAssignment(assignmentId: string): Promise<{ da
     const { data, error } = await supabase
       .from('payments')
       .select('*')
-      .eq('route_assignment_id', assignmentId)
-      .single();
+      .eq('route_assignment_id', assignmentId);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+    if (error) {
       return { data: null, error: error.message };
     }
 
-    return { data: data || null, error: null };
+    // Return the first payment found, or null if none
+    return { data: data && data.length > 0 ? data[0] : null, error: null };
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
   }

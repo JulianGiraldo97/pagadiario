@@ -84,7 +84,8 @@ export default function CollectorDashboard() {
       assignmentId: assignment.id,
       clientId: assignment.client_id,
       clientName: assignment.client?.name || '',
-      paymentScheduleId: assignment.payment_schedule_id || ''
+      paymentScheduleId: assignment.payment_schedule_id || '',
+      date: selectedDate // Include the selected date
     });
     
     router.push(`/collector/payments?${params.toString()}`);
