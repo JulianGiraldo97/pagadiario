@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Modal from './Modal';
-import LoadingSpinner from './LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { PaymentStatus } from '@/lib/types';
 
 interface PaymentConfirmModalProps {

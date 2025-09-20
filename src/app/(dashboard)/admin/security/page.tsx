@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import SecurityAudit from '@/components/admin/SecurityAudit'
 

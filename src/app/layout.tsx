@@ -1,5 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import 'bootstrap/dist/css/bootstrap.min.css'
+
+// Force dynamic rendering for the entire app
+export const dynamic = 'force-dynamic'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth/AuthContext'
@@ -12,14 +15,6 @@ export const metadata: Metadata = {
   title: 'Sistema de Paga Diario',
   description: 'Sistema de gestión de cobros diarios optimizado para móvil',
   manifest: '/manifest.json',
-  themeColor: '#0d6efd',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover'
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -37,6 +32,15 @@ export const metadata: Metadata = {
     'msapplication-TileColor': '#0d6efd',
     'msapplication-tap-highlight': 'no'
   }
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#0d6efd'
 }
 
 export default function RootLayout({

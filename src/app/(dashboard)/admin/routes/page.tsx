@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import RouteForm from '@/components/forms/RouteForm';
 import RouteTable from '@/components/tables/RouteTable';
 import RouteDetailsModal from '@/components/ui/RouteDetailsModal';

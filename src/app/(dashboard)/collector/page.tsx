@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import { getCollectorDailyRoute, getCollectorRouteProgress } from '@/lib/supabase/routes';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -8,7 +11,7 @@ import { useTouchGestures } from '@/hooks/useTouchGestures';
 import ClientCard from '@/components/ui/ClientCard';
 import RouteProgress from '@/components/ui/RouteProgress';
 import RouteNavigation from '@/components/ui/RouteNavigation';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import NetworkIndicator from '@/components/ui/NetworkIndicator';
 import type { RouteAssignmentWithDetails } from '@/lib/types';
 
@@ -33,17 +36,21 @@ export default function CollectorDashboard() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Touch gestures for mobile navigation
+  const handleSwipeLeft = useCallback(() => {
+    if (currentClientIndex < assignments.length - 1) {
+      setCurrentClientIndex(currentClientIndex + 1);
+    }
+  }, [currentClientIndex, assignments.length]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (currentClientIndex > 0) {
+      setCurrentClientIndex(currentClientIndex - 1);
+    }
+  }, [currentClientIndex]);
+
   const gestureRef = useTouchGestures<HTMLDivElement>({
-    onSwipeLeft: () => {
-      if (currentClientIndex < assignments.length - 1) {
-        setCurrentClientIndex(currentClientIndex + 1);
-      }
-    },
-    onSwipeRight: () => {
-      if (currentClientIndex > 0) {
-        setCurrentClientIndex(currentClientIndex - 1);
-      }
-    },
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
     threshold: 50
   });
 
@@ -91,7 +98,8 @@ export default function CollectorDashboard() {
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
       // Auto-hide message after 5 seconds
-      setTimeout(() => setSuccessMessage(null), 5000);
+      const timeoutId = setTimeout(() => setSuccessMessage(null), 5000);
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedDate]);
 

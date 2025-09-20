@@ -70,7 +70,7 @@ export function useTouchGestures<T extends HTMLElement = HTMLElement>(options: T
       element.removeEventListener('touchend', handleTouchEnd);
       element.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [options, threshold]);
+  }, [options.onSwipeLeft, options.onSwipeRight, options.onSwipeUp, options.onSwipeDown, threshold]);
 
   return elementRef;
 }

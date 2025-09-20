@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { recordPayment, updatePayment } from '@/lib/supabase/payments';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { RecordPaymentForm, Payment, PaymentStatus } from '@/lib/types';
 import { 
   validatePaymentForm, 

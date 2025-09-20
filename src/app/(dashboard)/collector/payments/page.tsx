@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCollectorDailyRoute } from '@/lib/supabase/routes';
 import { getPaymentByAssignment } from '@/lib/supabase/payments';
 import PaymentForm from '@/components/forms/PaymentForm';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import type { RouteAssignmentWithDetails, Payment } from '@/lib/types';
 

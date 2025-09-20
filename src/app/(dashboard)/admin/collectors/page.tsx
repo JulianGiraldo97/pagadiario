@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { getAllCollectors } from '@/lib/supabase/collectors';
 import CollectorForm from '@/components/forms/CollectorForm';
 import CollectorTable from '@/components/tables/CollectorTable';

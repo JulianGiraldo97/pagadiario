@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -38,6 +38,7 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -47,13 +48,22 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
     // Auto remove toast after duration
     const duration = toast.duration || 5000;
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       removeToast(id);
+      timeoutRefs.current.delete(id);
     }, duration);
+    
+    timeoutRefs.current.set(id, timeoutId);
   }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
+    // Clear timeout if it exists
+    const timeoutId = timeoutRefs.current.get(id);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutRefs.current.delete(id);
+    }
   }, []);
 
   const showSuccess = useCallback((title: string, message?: string) => {
@@ -71,6 +81,14 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const showInfo = useCallback((title: string, message?: string) => {
     addToast({ type: 'info', title, message });
   }, [addToast]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
+      timeoutRefs.current.clear();
+    };
+  }, []);
 
   return (
     <ToastContext.Provider value={{

@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '@/lib/auth/AuthContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
@@ -10,7 +13,7 @@ import CollectionChart from '@/components/charts/CollectionChart'
 import PaymentStatusChart from '@/components/charts/PaymentStatusChart'
 import CollectorPerformanceChart from '@/components/charts/CollectorPerformanceChart'
 import ReportsTable from '@/components/tables/ReportsTable'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import {
   getDailyCollectionSummary,
   getPaymentsByStatus,

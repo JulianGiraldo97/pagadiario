@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { toast } from 'react-hot-toast';
 import ClientForm from '@/components/forms/ClientForm';
 import ClientTable from '@/components/tables/ClientTable';
