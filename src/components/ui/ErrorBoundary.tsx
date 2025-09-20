@@ -24,6 +24,15 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
+    // Handle serialization errors specifically
+    if (error.message.includes('Event handlers cannot be passed to Client Component props')) {
+      console.error('Serialization error detected - this is likely a Next.js hydration issue');
+      // Force a client-side re-render
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+    
     // Log error to monitoring service in production
     if (process.env.NODE_ENV === 'production') {
       // TODO: Send to error monitoring service

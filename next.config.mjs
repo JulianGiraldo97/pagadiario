@@ -9,6 +9,8 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
+  // Force all pages to be dynamic
+  output: 'standalone',
 };
 
 export default nextConfig;
