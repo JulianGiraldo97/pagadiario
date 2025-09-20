@@ -7,11 +7,7 @@ export const fetchCache = 'force-no-store'
 export const runtime = 'nodejs'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './globals.css'
-import { AuthProvider } from '@/lib/auth/AuthContext'
-import BootstrapClient from '@/components/ui/BootstrapClient'
-import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration'
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { ToastProvider } from '@/components/ui/Toast'
+import ClientApp from '@/components/ClientApp'
 
 export const metadata: Metadata = {
   title: 'Sistema de Paga Diario',
@@ -57,15 +53,9 @@ export default function RootLayout({
         <link rel="alternate icon" href="/favicon.ico" />
       </head>
       <body>
-        <ErrorBoundary>
-          <ToastProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </ToastProvider>
-        </ErrorBoundary>
-        <BootstrapClient />
-        <ServiceWorkerRegistration />
+        <ClientApp>
+          {children}
+        </ClientApp>
       </body>
     </html>
   )
