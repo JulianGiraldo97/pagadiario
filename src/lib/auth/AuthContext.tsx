@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<SimpleProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   const createProfileFromUser = (user: User): SimpleProfile => {
     // Determine role based on email (simple logic for now)
@@ -47,6 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(profileData)
     }
   }
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const signIn = async (email: string, password: string, retryCount = 0) => {
     const maxRetries = 3
@@ -262,6 +268,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     refreshProfile,
+  }
+
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        profile: null,
+        loading: true,
+        signIn: async () => ({ error: null }),
+        signOut: async () => {},
+        refreshProfile: async () => {}
+      }}>
+        {children}
+      </AuthContext.Provider>
+    )
   }
 
   return (
