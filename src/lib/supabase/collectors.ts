@@ -264,7 +264,7 @@ export async function resetCollectorPassword(id: string, newPassword: string): P
 
     // For now, we'll just return success
     // In production, this would need to be implemented as a server-side function
-    console.log(`Password reset requested for collector ${id} with new password: ${newPassword}`);
+    // console.log(`Password reset requested for collector ${id} with new password: ${newPassword}`);
     
     return { success: true, error: null };
   } catch (error) {

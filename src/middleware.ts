@@ -4,8 +4,12 @@ import type { NextRequest } from 'next/server'
 
 // Security logging utility
 function logSecurityEvent(event: string, details: any) {
-  const timestamp = new Date().toISOString()
-  console.log(`[SECURITY] ${timestamp} - ${event}:`, JSON.stringify(details))
+  // Security events are logged internally but not to console in production
+  // In production, these would be sent to a monitoring service
+  if (process.env.NODE_ENV === 'development') {
+    const timestamp = new Date().toISOString()
+    console.log(`[SECURITY] ${timestamp} - ${event}:`, JSON.stringify(details))
+  }
 }
 
 // Rate limiting store (in production, use Redis or similar)

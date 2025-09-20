@@ -158,7 +158,7 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
 
     const routeDate = date || new Date().toISOString().split('T')[0];
 
-    console.log('Getting collector daily route for:', { userId: user.id, routeDate });
+    // console.log('Getting collector daily route for:', { userId: user.id, routeDate });
 
     // Try using the database function first
     try {
@@ -168,7 +168,7 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
       });
 
       if (!functionError && functionData && functionData.length > 0) {
-        console.log('Database function returned data:', functionData);
+        // console.log('Database function returned data:', functionData);
         
         // Transform the data to match the expected format
         const transformedData = functionData.map((item: any) => ({
@@ -199,15 +199,15 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
           } : null
         }));
 
-        console.log('Transformed data:', transformedData);
+        // console.log('Transformed data:', transformedData);
         return { data: transformedData, error: null };
       }
     } catch (functionErr) {
-      console.warn('Database function failed, falling back to direct query:', functionErr);
+      // console.warn('Database function failed, falling back to direct query:', functionErr);
     }
 
     // Fallback to direct query if function fails or returns no data
-    console.log('Using fallback direct query method');
+    // console.log('Using fallback direct query method');
     
     // First get the route for the collector and date
     const { data: routes, error: routeError } = await supabase
@@ -225,7 +225,7 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
     }
 
     const route = routes[0];
-    console.log('Found route:', route);
+    // console.log('Found route:', route);
 
     // Then get the assignments with related data
     const { data: assignments, error: assignmentsError } = await supabase
@@ -243,11 +243,11 @@ export async function getCollectorDailyRoute(date?: string): Promise<{ data: Rou
       return { data: [], error: assignmentsError.message };
     }
 
-    console.log('Direct query assignments:', assignments);
+    // console.log('Direct query assignments:', assignments);
     return { data: assignments || [], error: null };
 
   } catch (error) {
-    console.error('Error in getCollectorDailyRoute:', error);
+    // console.error('Error in getCollectorDailyRoute:', error);
     return { data: [], error: error instanceof Error ? error.message : 'Error desconocido' };
   }
 }

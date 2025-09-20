@@ -6,7 +6,7 @@ export function registerServiceWorker() {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
         
-        console.log('Service Worker registered successfully:', registration);
+        // console.log('Service Worker registered successfully:', registration);
 
         // Handle updates
         registration.addEventListener('updatefound', () => {
@@ -28,14 +28,14 @@ export function registerServiceWorker() {
         }
 
       } catch (error) {
-        console.error('Service Worker registration failed:', error);
+        // console.error('Service Worker registration failed:', error);
       }
     });
 
     // Listen for messages from service worker
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'CACHE_UPDATED') {
-        console.log('Cache updated:', event.data.payload);
+        // console.log('Cache updated:', event.data.payload);
       }
     });
   }
@@ -55,7 +55,7 @@ export function unregisterServiceWorker() {
         registration.unregister();
       })
       .catch((error) => {
-        console.error('Service Worker unregistration failed:', error);
+        // console.error('Service Worker unregistration failed:', error);
       });
   }
 }

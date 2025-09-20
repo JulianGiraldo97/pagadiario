@@ -73,19 +73,21 @@ export class SecurityLogger {
 
     this.logs.push(logEntry)
     
-    // Console logging for development
-    const logMessage = `[${logEntry.level}] ${logEntry.event} - User: ${logEntry.userId || 'anonymous'} - ${JSON.stringify(logEntry.details || {})}`
-    
-    switch (logEntry.level) {
-      case SecurityLogLevel.CRITICAL:
-      case SecurityLogLevel.ERROR:
-        console.error(logMessage)
-        break
-      case SecurityLogLevel.WARNING:
-        console.warn(logMessage)
-        break
-      default:
-        console.log(logMessage)
+    // Console logging only in development
+    if (process.env.NODE_ENV === 'development') {
+      const logMessage = `[${logEntry.level}] ${logEntry.event} - User: ${logEntry.userId || 'anonymous'} - ${JSON.stringify(logEntry.details || {})}`
+      
+      switch (logEntry.level) {
+        case SecurityLogLevel.CRITICAL:
+        case SecurityLogLevel.ERROR:
+          console.error(logMessage)
+          break
+        case SecurityLogLevel.WARNING:
+          console.warn(logMessage)
+          break
+        default:
+          console.log(logMessage)
+      }
     }
 
     // In production, send to monitoring service
@@ -96,9 +98,11 @@ export class SecurityLogger {
 
   private sendToMonitoringService(entry: SecurityLogEntry): void {
     // Implementation would send to external monitoring service
-    // For now, just ensure critical events are logged
+    // In production, critical events would be sent to monitoring service
+    // For now, we just store them internally without console logging
     if (entry.level === SecurityLogLevel.CRITICAL) {
-      console.error('CRITICAL SECURITY EVENT:', entry)
+      // In production, this would send to external monitoring service
+      // console.error('CRITICAL SECURITY EVENT:', entry)
     }
   }
 

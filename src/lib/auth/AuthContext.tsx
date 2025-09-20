@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { securityLogger, SecurityLogLevel, SecurityEventType } = await import('@/lib/utils/security')
 
     try {
-      console.log(`Attempting to sign in with Supabase... (attempt ${retryCount + 1}/${maxRetries + 1})`)
+      // console.log(`Attempting to sign in with Supabase... (attempt ${retryCount + 1}/${maxRetries + 1})`)
 
       // Log login attempt
       securityLogger.log({
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        console.error('Supabase auth error:', error)
+        // console.error('Supabase auth error:', error)
 
         // Log login failure
         securityLogger.log({
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Handle 502 Bad Gateway specifically (service initializing)
         if (error.message.includes('fetch') && retryCount < maxRetries) {
-          console.log(`Service may be initializing, retrying in ${retryDelay / 1000} seconds...`)
+          // console.log(`Service may be initializing, retrying in ${retryDelay / 1000} seconds...`)
           await new Promise(resolve => setTimeout(resolve, retryDelay))
           return signIn(email, password, retryCount + 1)
         }
@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
-      console.log('Sign in successful')
+      // console.log('Sign in successful')
       
       // Log successful login
       if (data.user) {
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error: null }
     } catch (error) {
-      console.error('Unexpected error during sign in:', error)
+      // console.error('Unexpected error during sign in:', error)
 
       // Log unexpected error
       securityLogger.log({
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Retry on network errors
       if (error instanceof TypeError && error.message.includes('fetch') && retryCount < maxRetries) {
-        console.log(`Network error, retrying in ${retryDelay / 1000} seconds...`)
+        // console.log(`Network error, retrying in ${retryDelay / 1000} seconds...`)
         await new Promise(resolve => setTimeout(resolve, retryDelay))
         return signIn(email, password, retryCount + 1)
       }
@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setProfile(null)
     } catch (error) {
-      console.error('Error signing out:', error)
+      // console.error('Error signing out:', error)
     }
   }
 
