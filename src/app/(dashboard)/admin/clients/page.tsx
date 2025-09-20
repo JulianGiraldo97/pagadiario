@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
 import { toast } from 'react-hot-toast';
 import ClientForm from '@/components/forms/ClientForm';
 import ClientTable from '@/components/tables/ClientTable';
@@ -11,6 +8,9 @@ import Modal from '@/components/ui/Modal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getClients, createClient, updateClient, deleteClient } from '@/lib/supabase/clients';
 import type { Client, CreateClientForm } from '@/lib/types';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);

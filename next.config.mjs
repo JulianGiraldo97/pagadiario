@@ -4,13 +4,11 @@ const nextConfig = {
     domains: ['supabase.co'],
   },
   // Force all pages to be dynamic
+  trailingSlash: false,
+  // Disable static optimization completely
   experimental: {
-    staticPageGenerationTimeout: 0,
+    forceSwcTransforms: true,
   },
-  // Disable static generation for all pages
-  generateStaticParams: false,
-  // Skip static generation
-  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

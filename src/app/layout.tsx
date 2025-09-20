@@ -3,6 +3,8 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 
 // Force dynamic rendering for the entire app
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const runtime = 'nodejs'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth/AuthContext'
