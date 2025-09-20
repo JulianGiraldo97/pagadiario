@@ -1,13 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-icons/font/bootstrap-icons.css'
-import './globals.css'
-import ClientApp from '@/components/ClientApp'
-
-// Force dynamic rendering for the entire app
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const runtime = 'nodejs'
 
 export const metadata: Metadata = {
   title: 'Sistema de Paga Diario',
@@ -39,24 +30,4 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   themeColor: '#0d6efd'
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="es">
-      <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
-      </head>
-      <body>
-        <ClientApp>
-          {children}
-        </ClientApp>
-      </body>
-    </html>
-  )
 }
