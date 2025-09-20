@@ -6,6 +6,7 @@ import BootstrapClient from '@/components/ui/BootstrapClient'
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
+import ClientOnlyApp from './ClientOnlyApp'
 
 interface ClientAppProps {
   children: ReactNode
@@ -13,14 +14,16 @@ interface ClientAppProps {
 
 export default function ClientApp({ children }: ClientAppProps) {
   return (
-    <ErrorBoundary>
-      <ToastProvider>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </ToastProvider>
-      <BootstrapClient />
-      <ServiceWorkerRegistration />
-    </ErrorBoundary>
+    <ClientOnlyApp>
+      <ErrorBoundary>
+        <ToastProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ToastProvider>
+        <BootstrapClient />
+        <ServiceWorkerRegistration />
+      </ErrorBoundary>
+    </ClientOnlyApp>
   )
 }
