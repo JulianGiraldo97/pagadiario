@@ -156,6 +156,15 @@ export async function updatePayment(
       return { data: null, error: error.message };
     }
 
+    // Update payment schedule status if payment status changed
+    if (paymentData.payment_status !== undefined && paymentData.payment_schedule_id) {
+      const scheduleStatus = paymentData.payment_status === 'paid' ? 'paid' : 'pending';
+      await supabase
+        .from('payment_schedule')
+        .update({ status: scheduleStatus })
+        .eq('id', paymentData.payment_schedule_id);
+    }
+
     return { data, error: null };
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };

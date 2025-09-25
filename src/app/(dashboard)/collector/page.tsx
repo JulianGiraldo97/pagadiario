@@ -87,16 +87,18 @@ export default function CollectorDashboard() {
 
   useEffect(() => {
     loadRouteData(selectedDate);
-    
+
     // Check for success message from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const message = urlParams.get('message');
-    
+
     if (success === 'true' && message) {
       setSuccessMessage(message);
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
+      // Reload route data to reflect payment changes
+      loadRouteData(selectedDate);
       // Auto-hide message after 5 seconds
       const timeoutId = setTimeout(() => setSuccessMessage(null), 5000);
       return () => clearTimeout(timeoutId);
