@@ -87,18 +87,42 @@ export default function ClientCard({ assignment, onPaymentClick, isOptimizedForM
         </div>
 
         {paymentSchedule && (
-          <div className="row g-2 mb-3">
-            <div className="col-6">
-              <small className="text-muted">Monto a cobrar:</small>
-              <div className="fw-bold text-primary">
-                ${paymentSchedule.amount.toLocaleString()}
+          <div className="mb-3">
+            {/* Installment info banner */}
+            <div className="alert alert-light border mb-2 py-2 px-3">
+              <div className="d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-receipt text-primary me-2"></i>
+                  <small className="text-muted">Cuota a cobrar hoy</small>
+                </div>
+                <div className="fw-bold text-primary">
+                  ${paymentSchedule.amount.toLocaleString()}
+                </div>
               </div>
+              {paymentSchedule.due_date && (
+                <small className="text-muted d-block mt-1">
+                  <i className="bi bi-calendar3 me-1"></i>
+                  Vencimiento: {new Date(paymentSchedule.due_date).toLocaleDateString('es-ES', { 
+                    day: '2-digit', 
+                    month: 'short' 
+                  })}
+                </small>
+              )}
             </div>
+            
             {payment && payment.payment_status === 'paid' && (
-              <div className="col-6">
-                <small className="text-muted">Monto recibido:</small>
-                <div className="fw-bold text-success">
-                  ${(payment.amount_paid || 0).toLocaleString()}
+              <div className="row g-2">
+                <div className="col-6">
+                  <small className="text-muted">Monto recibido:</small>
+                  <div className="fw-bold text-success">
+                    ${(payment.amount_paid || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted">Diferencia:</small>
+                  <div className={`fw-bold ${(payment.amount_paid || 0) >= paymentSchedule.amount ? 'text-success' : 'text-warning'}`}>
+                    ${Math.abs((payment.amount_paid || 0) - paymentSchedule.amount).toLocaleString()}
+                  </div>
                 </div>
               </div>
             )}

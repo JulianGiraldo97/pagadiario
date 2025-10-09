@@ -325,3 +325,49 @@ export async function calculateClientDebtSummary(clientId: string) {
 
   return summary;
 }
+
+/**
+ * Get detailed installment information for a payment schedule
+ */
+export async function getInstallmentDetails(paymentScheduleId: string): Promise<{
+  installment_number: number;
+  total_installments: number;
+  amount: number;
+  due_date: string;
+  status: PaymentScheduleStatus;
+  debt_id: string;
+} | null> {
+  
+  const { data, error } = await supabase
+    .from('payment_schedule')
+    .select('id, debt_id, amount, due_date, status')
+    .eq('id', paymentScheduleId)
+    .single();
+
+  if (error || !data) {
+    console.error('Error fetching installment details:', error);
+    return null;
+  }
+
+  // Get all installments for this debt to calculate position
+  const { data: allInstallments } = await supabase
+    .from('payment_schedule')
+    .select('id, due_date')
+    .eq('debt_id', data.debt_id)
+    .order('due_date');
+
+  if (!allInstallments) return null;
+
+  // Find the position of this installment
+  const installmentNumber = allInstallments.findIndex(i => i.id === paymentScheduleId) + 1;
+  const totalInstallments = allInstallments.length;
+
+  return {
+    installment_number: installmentNumber,
+    total_installments: totalInstallments,
+    amount: data.amount,
+    due_date: data.due_date,
+    status: data.status,
+    debt_id: data.debt_id
+  };
+}

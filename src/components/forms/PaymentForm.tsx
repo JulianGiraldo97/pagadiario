@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { recordPayment, updatePayment } from '@/lib/supabase/payments';
+import { getInstallmentDetails } from '@/lib/supabase/debts';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { RecordPaymentForm, Payment, PaymentStatus } from '@/lib/types';
 import { 
@@ -25,6 +26,14 @@ interface PaymentFormProps {
   existingPayment?: Payment | null;
   onSuccess: (payment: Payment) => void;
   onCancel: () => void;
+}
+
+interface InstallmentInfo {
+  installment_number: number;
+  total_installments: number;
+  amount: number;
+  due_date: string;
+  status: string;
 }
 
 interface FormData {
@@ -49,6 +58,27 @@ export default function PaymentForm({
   const [previewImage, setPreviewImage] = useState<string | null>(
     existingPayment?.evidence_photo_url || null
   );
+  const [installmentInfo, setInstallmentInfo] = useState<InstallmentInfo | null>(null);
+  const [loadingInstallment, setLoadingInstallment] = useState(false);
+
+  // Load installment details when component mounts
+  useEffect(() => {
+    if (paymentScheduleId) {
+      setLoadingInstallment(true);
+      getInstallmentDetails(paymentScheduleId)
+        .then(info => {
+          if (info) {
+            setInstallmentInfo(info);
+          }
+        })
+        .catch(err => {
+          console.error('Error loading installment details:', err);
+        })
+        .finally(() => {
+          setLoadingInstallment(false);
+        });
+    }
+  }, [paymentScheduleId]);
 
 
   const {
@@ -272,6 +302,56 @@ export default function PaymentForm({
         <small className="text-muted">Cliente: {clientName}</small>
       </div>
       <div className="card-body">
+        {/* Installment Information Banner */}
+        {loadingInstallment ? (
+          <div className="alert alert-info d-flex align-items-center" role="alert">
+            <LoadingSpinner size="sm" className="me-2" />
+            <span>Cargando información de la cuota...</span>
+          </div>
+        ) : installmentInfo ? (
+          <div className="alert alert-primary" role="alert">
+            <div className="d-flex align-items-center mb-2">
+              <i className="bi bi-calendar-check fs-4 me-3"></i>
+              <div className="flex-grow-1">
+                <div className="fw-bold">
+                  Cuota {installmentInfo.installment_number} de {installmentInfo.total_installments}
+                </div>
+                <small className="text-muted">
+                  Fecha de vencimiento: {new Date(installmentInfo.due_date).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </small>
+              </div>
+              <div className="text-end">
+                <div className="fs-5 fw-bold text-primary">
+                  ${installmentInfo.amount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <div className="progress" style={{ height: '8px' }}>
+              <div 
+                className="progress-bar bg-success" 
+                role="progressbar" 
+                style={{ 
+                  width: `${(installmentInfo.installment_number / installmentInfo.total_installments) * 100}%` 
+                }}
+              ></div>
+            </div>
+          </div>
+        ) : paymentScheduleId ? (
+          <div className="alert alert-warning" role="alert">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            No se pudo cargar la información de la cuota
+          </div>
+        ) : (
+          <div className="alert alert-info" role="alert">
+            <i className="bi bi-info-circle me-2"></i>
+            Este cliente no tiene una cuota pendiente asignada en esta ruta
+          </div>
+        )}
+
         {error && (
           <div className="alert alert-danger" role="alert">
             <i className="bi bi-exclamation-triangle me-2"></i>

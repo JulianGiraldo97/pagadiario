@@ -65,11 +65,18 @@ export async function recordPayment(paymentData: RecordPaymentForm): Promise<{ d
     }
 
     // Update payment schedule status if payment was made
+    // Use the database function to ensure consistency and auto-complete debts
     if (paymentData.payment_status === 'paid' && paymentData.payment_schedule_id) {
-      await supabase
-        .from('payment_schedule')
-        .update({ status: 'paid' })
-        .eq('id', paymentData.payment_schedule_id);
+      const { error: updateError } = await supabase.rpc('mark_payment_schedule_paid', {
+        payment_schedule_id_param: paymentData.payment_schedule_id,
+        payment_id_param: data.id
+      });
+
+      if (updateError) {
+        console.error('Error updating payment schedule:', updateError);
+        // Don't fail the payment registration, but log the error
+        // The payment was recorded successfully
+      }
     }
 
     return { data, error: null };
@@ -158,11 +165,23 @@ export async function updatePayment(
 
     // Update payment schedule status if payment status changed
     if (paymentData.payment_status !== undefined && paymentData.payment_schedule_id) {
-      const scheduleStatus = paymentData.payment_status === 'paid' ? 'paid' : 'pending';
-      await supabase
-        .from('payment_schedule')
-        .update({ status: scheduleStatus })
-        .eq('id', paymentData.payment_schedule_id);
+      if (paymentData.payment_status === 'paid') {
+        // Use the database function to ensure consistency
+        const { error: updateError } = await supabase.rpc('mark_payment_schedule_paid', {
+          payment_schedule_id_param: paymentData.payment_schedule_id,
+          payment_id_param: paymentId
+        });
+
+        if (updateError) {
+          console.error('Error updating payment schedule:', updateError);
+        }
+      } else {
+        // If changing from paid to not_paid or absent, revert to pending
+        await supabase
+          .from('payment_schedule')
+          .update({ status: 'pending' })
+          .eq('id', paymentData.payment_schedule_id);
+      }
     }
 
     return { data, error: null };

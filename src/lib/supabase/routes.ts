@@ -46,10 +46,30 @@ export async function createRoute(routeData: CreateRouteForm): Promise<{ data: R
       return { data: null, error: routeError.message };
     }
 
-    // Create route assignments
+    // Get pending installments for all clients in the route
+    const { data: pendingInstallments, error: installmentsError } = await supabase
+      .rpc('get_pending_installments_for_clients', {
+        client_ids_param: routeData.client_ids
+      });
+
+    if (installmentsError) {
+      console.warn('Warning: Could not fetch pending installments:', installmentsError.message);
+      // Continue without payment schedules rather than failing
+    }
+
+    // Create a map of client_id -> payment_schedule_id for quick lookup
+    const clientScheduleMap = new Map<string, string>();
+    if (pendingInstallments) {
+      pendingInstallments.forEach((item: any) => {
+        clientScheduleMap.set(item.client_id, item.payment_schedule_id);
+      });
+    }
+
+    // Create route assignments with payment_schedule_id
     const assignments = routeData.client_ids.map((clientId, index) => ({
       route_id: route.id,
       client_id: clientId,
+      payment_schedule_id: clientScheduleMap.get(clientId) || null, // Assign the current pending installment
       visit_order: index + 1
     }));
 
